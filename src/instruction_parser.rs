@@ -2,6 +2,18 @@ use std::collections::HashMap;
 
 use crate::symbol_table::SymbolTable;
 
+/// parse_instructions takes the contents of the .asm file as a string of insctructions 
+/// and parses them into a Vector of strings. The file is split into lines, comments are 
+/// removed and then each line is parsed as an A or a C instruction as defined by the first 
+/// character of the line. These are represented by structs which implement the insctruction
+/// trait, which allows them to be converted to a bonary string, which are then collected into
+/// a Vector and returned,
+/// 
+/// # Arguments
+/// * `contents` - A pointer to the contents of the assembly code file to be parsed
+/// * `symbol_table` - The table of symbols that will be used when the address of an insctuction is
+/// non-numeric. This has already been defined in the first pass
+/// 
 pub fn parse_instructions(contents: &str, symbol_table: &mut SymbolTable) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
     for mut line in contents.lines() {
@@ -23,6 +35,7 @@ fn parse_instruction(file_line: &str, symbol_table: &mut SymbolTable) -> Box<dyn
     }
 }
 
+// Remove anything after the // and trim any left over whitespace
 fn remove_comments(instruction: &str) -> &str {
     return instruction.split("//").collect::<Vec<_>>()[0].trim();
 }
@@ -51,6 +64,7 @@ impl AInstruction {
 
 impl Instruction for AInstruction {
     fn to_binary_string(&self) -> String {
+        // Formatted to start with a 0 followed by a 15 digit binary address
         return format!("0{:015b}", self.address);
     }
 }
@@ -126,7 +140,8 @@ impl CInstruction {
             let mut dest_token = tokens.0.to_string();
             rest_of_line = tokens.1.to_string();
             dest_token.retain(|c| !c.is_whitespace());
-            dest = *dest_table.get(&dest_token).expect(&format!("ERROR: Failed to parse instruction {:?}", dest_token));
+            dest = *dest_table.get(&dest_token)
+            .expect(&format!("ERROR: Failed to parse instruction {:?}", dest_token));
         } else {
             dest = 0;
             rest_of_line = file_line.clone();
@@ -139,14 +154,16 @@ impl CInstruction {
             let mut jmp_token = tokens.1.to_string();
             rest_of_line = tokens.0.to_string();
             jmp_token.retain(|c| !c.is_whitespace());
-            jmp = *jmp_table.get(&jmp_token).expect(&format!("ERROR: Failed to parse instruction {:?}", jmp_token));
+            jmp = *jmp_table.get(&jmp_token)
+            .expect(&format!("ERROR: Failed to parse instruction {:?}", jmp_token));
         } else {
             jmp = 0;
         }
 
         let mut comp_token = rest_of_line.clone();
         comp_token.retain(|c| !c.is_whitespace());
-        let comp = *comp_table.get(&comp_token).expect(&format!("ERROR: Failed to parse instruction {:?}", comp_token));
+        let comp = *comp_table.get(&comp_token)
+        .expect(&format!("ERROR: Failed to parse instruction {:?}", comp_token));
 
         CInstruction{dest, comp, jmp}
     }
@@ -154,6 +171,9 @@ impl CInstruction {
 
 impl Instruction for CInstruction {
     fn to_binary_string(&self) -> String {
+        // Formatted to start with 111 followed by the format accccccdddjjj
+        // where a is the type of comp instruction, c is the comp instruction
+        // d is the optional dest instruction and j is the optional jump instruction
         return format!("111{:07b}{:03b}{:03b}", self.comp, self.dest, self.jmp);
     }
 }

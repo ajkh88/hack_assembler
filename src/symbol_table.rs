@@ -44,6 +44,13 @@ impl SymbolTable {
         Default::default()
     }
 
+    /// Takes a pointer to the contents of the assembly (.asm) file containing the instructions
+    /// to be parsed. Outputs a SymbolTable which can be used to lookup the addresses of 
+    /// symbols used in the assembly code. This can also be added to as the symbols are parsed.
+    ///  
+    /// # Arguments 
+    /// * `contents` - A pointer to the contents of the assembly code file from which the
+    /// symbols are to be obtained
     pub fn from(contents: &str) -> SymbolTable {
         let mut symbol_table = SymbolTable::new();
 
